@@ -1,0 +1,18 @@
+#!/usr/local/bin/node
+;(function (){
+  var leio = require('../leio.js')
+    , argv = process.argv
+
+  argv.shift(); argv.shift()
+  if (argv[0]) {
+    var cmd = leio[argv[0]]
+    if (cmd) {
+      argv.shift()
+      cmd(argv)
+    } else {
+      leio.printError(argv[0])
+    }
+  } else {
+    leio.printCmds()
+  }
+})()
