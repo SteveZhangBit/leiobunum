@@ -2,7 +2,6 @@
 
 var leio = {}
   , httpRequest = require('request')
-  , util = require('util')
 
 var Spider = require('./lib/spider')
 
@@ -12,15 +11,24 @@ leio.spider = function (options) {
   that.run = function () {
     var logger = that.logger
       , signals = that.signals
+      , settings = that.settings
+      , queue = that.queue
+      , running = 0
+
+    function _getAllFromQueue() {
+      var request = null
+      while (running < settings.CONCURRENT_REQUESTS && (request = queue.get())) {
+        signals.requestScheduled(request, that)
+      }
+    }
 
     printSpider(that)
 
     signals.spiderOpened(that)
     signals.on('request scheduled', function (request, spider) {
-      var requestCopy = util._extend({}, request)
-      delete requestCopy.callback
+      logger.trace('<Queue ' + queue.name + '> running requests ' + (++running))
 
-      httpRequest(requestCopy, function (err, response) {
+      httpRequest(request.getOptions(), function (err, response) {
         if (err) {
           logger.info(err.message)
         } else {
@@ -28,10 +36,16 @@ leio.spider = function (options) {
         }
       })
     })
-
-    that.startRequests().forEach(function (request) {
-      signals.requestScheduled(request, that)
+    signals.on('response received', function (request, response, spider) {
+      running--
+      _getAllFromQueue()
     })
+
+    // start requests
+    that.startRequests().forEach(function (request) {
+      queue.push(request)
+    })
+    _getAllFromQueue()
 
     process.on('beforeExit', function () {
       signals.spiderClosed('jobs completed', that)
@@ -57,18 +71,8 @@ function printSpider(spider) {
   console.log('\n')
 }
 
-leio.pipeline = function (options) {
-  var that = {}
-
-  that.spiderOpened = function (spider) { return spider }
-  that.spiderClosed = function (spider) { return spider }
-  that.processItem = function (item, spider) { return [item, spider] }
-
-  util._extend(that, options)
-
-  return that
-}
-
+leio.pipeline = require('./lib/pipeline')
 leio.middleware = require('./lib/middleware')
+leio.httpRequest = httpRequest
 
 module.exports = leio

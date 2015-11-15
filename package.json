@@ -1,27 +1,28 @@
 {
   "name": "leiobunum",
   "version": "1.0.0",
-  "description": "spider",
+  "description": "",
   "main": "index.js",
   "dependencies": {
-    "request": "^2.65.0",
-    "q": "^1.4.1",
+    "iconv-lite": "^0.4.13",
+    "cheerio": "^0.19.0",
     "log4js": "^0.6.27",
-    "cheerio": "^0.19.0"
+    "q": "^1.4.1",
+    "request": "^2.65.0"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SteveZhangBit/leiobunum.git"
   },
   "keywords": [
     "spider"
   ],
   "author": "Steve Zhang",
   "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SteveZhangBit/leiobunum.git"
-  },
   "bugs": {
     "url": "https://github.com/SteveZhangBit/leiobunum/issues"
   },
