@@ -28,9 +28,9 @@ leio.spider = function (options) {
     signals.on('request scheduled', function (request, spider) {
       logger.trace('<Queue ' + queue.name + '> running requests ' + (++running))
 
-      httpRequest(request.getOptions(), function (err, response) {
+      httpRequest(spider._requestOptions(request), function (err, response) {
         if (err) {
-          logger.info(err.message)
+          signals.spiderError(err, spider)
         } else {
           signals.responseReceived(request, response, spider)
         }
