@@ -16,9 +16,15 @@ leio.spider = function (options) {
       , running = 0
 
     function _getAllFromQueue() {
-      var request = null
-      while (running < settings.CONCURRENT_REQUESTS && (request = queue.get())) {
-        signals.requestScheduled(request, that)
+      if (running < settings.CONCURRENT_REQUESTS) {
+        queue.get(function (err, request) {
+          if (err || !request) {
+            return
+          }
+          logger.trace('<Queue ' + queue.name + '> running requests ' + (++running))
+          signals.requestScheduled(request, that)
+          _getAllFromQueue()
+        })
       }
     }
 
@@ -26,8 +32,6 @@ leio.spider = function (options) {
 
     signals.spiderOpened(that)
     signals.on('request scheduled', function (request, spider) {
-      logger.trace('<Queue ' + queue.name + '> running requests ' + (++running))
-
       httpRequest(spider._requestOptions(request), function (err, response) {
         if (err) {
           signals.spiderError(err, spider)
