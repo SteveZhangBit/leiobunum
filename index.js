@@ -1,7 +1,6 @@
 'use strict'
 
 var leio = {}
-  , httpRequest = require('request')
 
 var Spider = require('./lib/spider')
 
@@ -31,17 +30,8 @@ leio.spider = function (options) {
     printSpider(that)
 
     signals.spiderOpened(that)
-    signals.on('request scheduled', function (request, spider) {
-      httpRequest(spider._requestOptions(request), function (err, response) {
-        if (err) {
-          signals.spiderError(err, spider)
-        } else {
-          signals.responseReceived(request, response, spider)
-        }
-      })
-    })
-    signals.on('response received', function (request, response, spider) {
-      running--
+    signals.on('response downloaded', function (request, response, spider) {
+      --running
       _getAllFromQueue()
     })
 
@@ -53,6 +43,10 @@ leio.spider = function (options) {
 
     process.on('beforeExit', function () {
       signals.spiderClosed('jobs completed', that)
+    })
+
+    process.on('uncaughtException', function(err) {
+      logger.fatal(err)
     })
   }
 
@@ -76,7 +70,8 @@ function printSpider(spider) {
 }
 
 leio.pipeline = require('./lib/pipeline')
+leio.downloader = require('./lib/downloader')
 leio.middleware = require('./lib/middleware')
-leio.httpRequest = httpRequest
+leio.defer = require('q').defer
 
 module.exports = leio
