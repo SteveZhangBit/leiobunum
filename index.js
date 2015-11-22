@@ -55,6 +55,6 @@ function printSpider(spider) {
 leio.pipeline = require('./lib/pipeline')
 leio.downloader = require('./lib/downloader')
 leio.middleware = require('./lib/middleware')
-leio.defer = require('q').defer
+leio.redisQueue = require('./lib/redis-queue')
 
 module.exports = leio
