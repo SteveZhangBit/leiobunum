@@ -5,44 +5,27 @@ var leio = {}
 var Spider = require('./lib/spider')
 
 leio.spider = function (options) {
-  var that = new Spider(options)
+  var spider = new Spider(options)
 
-  that.run = function () {
-    var logger = that.logger
-      , signals = that.signals
-      , settings = that.settings
-      , queue = that.queue
-      , running = 0
+  spider.run = function () {
+    var logger = spider.logger
+      , signals = spider.signals
+      , settings = spider.settings
+      , queue = spider.queue
 
-    function _getAllFromQueue() {
-      if (running < settings.CONCURRENT_REQUESTS) {
-        queue.get(function (err, request) {
-          if (err || !request) {
-            return
-          }
-          logger.trace('<Queue ' + queue.name + '> running requests ' + (++running))
-          signals.requestScheduled(request, that)
-          _getAllFromQueue()
-        })
-      }
-    }
+    printSpider(spider)
 
-    printSpider(that)
-
-    signals.spiderOpened(that)
-    signals.on('response downloaded', function (request, response, spider) {
-      --running
-      _getAllFromQueue()
-    })
-
+    signals.spiderOpened(spider)
     // start requests
-    that.startRequests().forEach(function (request) {
+    spider.startRequests().forEach(function (request) {
       queue.push(request)
     })
-    _getAllFromQueue()
+    for (var i = 0; i < settings.CONCURRENT_REQUESTS; i++) {
+      spider._schedule()
+    }
 
     process.on('beforeExit', function () {
-      signals.spiderClosed('jobs completed', that)
+      signals.spiderClosed('jobs completed', spider)
     })
 
     process.on('uncaughtException', function(err) {
@@ -50,7 +33,7 @@ leio.spider = function (options) {
     })
   }
 
-  return that
+  return spider
 }
 
 function printSpider(spider) {
