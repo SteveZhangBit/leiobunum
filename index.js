@@ -24,7 +24,7 @@ leio.spider = function (options) {
       spider._schedule()
     }
 
-    process.on('beforeExit', function () {
+    process.once('beforeExit', function () {
       signals.spiderClosed('jobs completed', spider)
     })
 
