@@ -26,6 +26,7 @@ leio.spider = function (options) {
 
     process.once('beforeExit', function () {
       signals.spiderClosed('jobs completed', spider)
+      spider.stats.dump()
     })
 
     process.on('uncaughtException', function(err) {
