@@ -6,6 +6,7 @@ I haven't upload this project to npm, so by the time you can just download the s
 So you project directory may be some thing like this:
 
 myproject
+```
 |
 |--spiders/
 |-----spider_1.js
@@ -14,23 +15,23 @@ myproject
 |------leiobunum/
 |----------lib/
 |----------bin/
-
+```
 All the spider files should be under 'spiders' directory, just the same you will do with Scrapy.
 You can copy the binary file leio under bin/ to your project directory, the run ./leio
 
-leiobunum x.x.x
-
-Usage:
-  leio <command> [options] [args]
-
-Available commands:
-  start           Create a new project
-  feth            Fetch a URL using the default downloader
-  run             Run a spider in the current project by name
-  list            List all the spiders under spiders directory
-  version         Print leiobunum version
-
-Use leio <command> -h to see more info
+>leiobunum x.x.x
+>
+>Usage:
+>  leio <command> [options] [args]
+>
+>Available commands:
+>  start           Create a new project
+>  feth            Fetch a URL using the default downloader
+>  run             Run a spider in the current project by name
+>  list            List all the spiders under spiders directory
+>  version         Print leiobunum version
+>
+>Use leio <command> -h to see more info
 
 At the moment, only run, list and version are availble.
 
