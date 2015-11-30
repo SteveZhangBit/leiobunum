@@ -12,6 +12,7 @@ leio.spider = function (options) {
       , signals = spider.signals
       , settings = spider.settings
       , queue = spider.queue
+      , itemQueue = spider.itemQueue
 
     printSpider(spider)
 
@@ -24,14 +25,39 @@ leio.spider = function (options) {
       spider._schedule()
     }
 
+    // start item pipeline
+    for (var i = 0; i < settings.CONCURRENT_ITEMS; i++) {
+      itemQueue.get(function (err, item) {
+        signals.itemYield(item, spider)
+      })
+    }
+
     process.once('beforeExit', function () {
-      signals.spiderClosed('jobs completed', spider)
       spider.stats.dump()
     })
 
     process.on('uncaughtException', function(err) {
       logger.fatal(err)
     })
+
+    var heartbeat = 0
+    var timer = setInterval(function () {
+      itemQueue.count(function (err, val) {
+        if (err || !val) {
+          queue.count(function (err, val) {
+            if ((err || !val) && !spider._running) {
+              if (++heartbeat === 3) {
+                signals.spiderClosed('jobs completed', spider)
+                queue.end()
+                clearInterval(timer)
+              }
+            } else {
+              heartbeat = 0
+            }
+          })
+        }
+      })
+    }, 1000)
   }
 
   return spider
@@ -57,5 +83,6 @@ leio.pipeline = require('./lib/pipeline')
 leio.downloader = require('./lib/downloader')
 leio.middleware = require('./lib/middleware')
 leio.redisQueue = require('./lib/redis-queue')
+leio.defer = require('q').defer
 
 module.exports = leio
