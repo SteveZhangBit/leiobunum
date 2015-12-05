@@ -92,15 +92,11 @@ Images will be downloaded under ./yilei. Have fun!!!
 'use strict'
 
 var leio = require('leiobunum')
-  , redisQueue = leio.redisQueue
-
-// create custom redis requests queue
-var requestQueue = redisQueue({ name: 'yilei.redis.requests', timeout: 5 })
-
-// create custom redis files queue for files pipeline
-var fileQueue = redisQueue({ name: 'yilei.redis.files', timeout: 5 })
-  , filesPipeline = leio.pipeline.filesPipeline(
-      { pathToStore: './yilei/', concurrent: 12, queue: fileQueue.queue })
+  , redisScheduler = leio.redisScheduler
+  , Scheduler = redisScheduler.scheduler({ host: '10.211.55.10' })
+  , uniqueDownloader = redisScheduler.uniqueDownloader({ host: '10.211.55.10' })
+  , cacheDownloader = redisScheduler.cacheDownloader({ host: '10.211.55.10' })
+  , filesPipeline = leio.pipeline.filesPipeline('./yilei/')
 
 var spider = leio.spider({
   name: 'yilei',
@@ -110,16 +106,17 @@ var spider = leio.spider({
     'http://help.3g.163.com/15/0623/16/ASQEERTT00964JJI.html'
   ],
   settings: {
-    LOG_LEVEL: 'DEBUG',
+    LOG_LEVEL: 'TRACE',
     // LOG_FILE: './log',
-    DEPTH_LIMIT: 3,
+    DEPTH_LIMIT: 1,
     CONCURRENT_REQUESTS: 3,
+    // LOG_STDOUT: true,
     DOWNLOAD_DELAY: 2
   },
 
   pipelines: [filesPipeline],
-  downloaders: { '10': requestQueue.uniqueDownloader, '20': requestQueue.cacheDownloader },
-  queue: requestQueue.queue,
+  downloaders: { '10': uniqueDownloader, '20': cacheDownloader },
+  Scheduler: Scheduler,   // change the default Scheduler class to redis scheduler
 
   parse: function (response, spider) {
     var $ = response.$
