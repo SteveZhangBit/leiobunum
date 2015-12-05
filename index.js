@@ -1,6 +1,7 @@
 'use strict'
 
 var leio = {}
+  , Q = require('q')
 
 var Spider = require('./lib/spider')
 
@@ -11,26 +12,20 @@ leio.spider = function (options) {
     var logger = spider.logger
       , signals = spider.signals
       , settings = spider.settings
-      , queue = spider.queue
-      , itemQueue = spider.itemQueue
+      , scheduler = spider.scheduler
+      , itemScheduler = spider.itemScheduler
 
     printSpider(spider)
 
     signals.spiderOpened(spider)
     // start requests
     spider.startRequests().forEach(function (request) {
-      queue.push(request)
+      scheduler.push(request)
     })
-    for (var i = 0; i < settings.CONCURRENT_REQUESTS; i++) {
-      spider._schedule()
-    }
+    scheduler.start()
 
     // start item pipeline
-    for (var i = 0; i < settings.CONCURRENT_ITEMS; i++) {
-      itemQueue.get(function (err, item) {
-        signals.itemYield(item, spider)
-      })
-    }
+    itemScheduler.start()
 
     process.once('beforeExit', function () {
       spider.stats.dump()
@@ -40,23 +35,33 @@ leio.spider = function (options) {
       logger.fatal(err)
     })
 
+    function _isSchedulerEmpty(scheduler) {
+      return function () {
+        var deferred = Q.defer()
+        scheduler.count(function (err, val) {
+          if ((err || !val) && !scheduler.running) {
+            deferred.resolve()
+          } else {
+            deferred.reject()
+          }
+        })
+        return deferred.promise
+      }
+    }
     var heartbeat = 0
     var timer = setInterval(function () {
-      itemQueue.count(function (err, val) {
-        if (err || !val) {
-          queue.count(function (err, val) {
-            if ((err || !val) && !spider._running) {
-              if (++heartbeat === 3) {
-                signals.spiderClosed('jobs completed', spider)
-                queue.end()
-                clearInterval(timer)
-              }
-            } else {
-              heartbeat = 0
-            }
-          })
-        }
-      })
+      Q.fcall(_isSchedulerEmpty(scheduler))
+        .then(_isSchedulerEmpty(itemScheduler))
+        .then(function () {
+          if (++heartbeat === 3) {
+            signals.spiderClosed('jobs completed', spider)
+            clearInterval(timer)
+          }
+        })
+        .fail(function () {
+          heartbeat = 0
+        })
+        .done()
     }, 1000)
   }
 
@@ -82,7 +87,7 @@ function printSpider(spider) {
 leio.pipeline = require('./lib/pipeline')
 leio.downloader = require('./lib/downloader')
 leio.middleware = require('./lib/middleware')
-leio.redisQueue = require('./lib/redis-queue')
-leio.defer = require('q').defer
+leio.redisScheduler = require('./lib/redis-scheduler')
+leio.defer = Q.defer
 
 module.exports = leio
