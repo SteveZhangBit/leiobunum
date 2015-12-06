@@ -17,16 +17,13 @@ leio.spider = function (options) {
 
     printSpider(spider)
 
-    signals.spiderOpened(spider)
-    // start requests
+    // add start requests
     spider.startRequests().forEach(function (request) {
       scheduler.push(request)
     })
-    scheduler.start()
-
-    // start item pipeline
-    itemScheduler.start()
-
+    // start the spider
+    signals.spiderOpened(spider)
+    // dump
     process.once('beforeExit', function () {
       spider.stats.dump()
     })
