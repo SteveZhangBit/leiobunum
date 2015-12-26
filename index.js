@@ -3,6 +3,8 @@
 var leio = {}
   , Q = require('q')
 
+module.exports = leio
+
 var Spider = require('./lib/spider')
 
 leio.spider = function (options) {
@@ -79,7 +81,8 @@ function printSpider(spider) {
       for (var key in headers) {
         console.log('        ' + key + ': ' + headers[key])
       }
-    } else {
+    } else if (key !== 'DOWNLOADERS' &&
+        key !== 'MIDDLEWARES' && key !== 'PIPELINES') {
       console.log('    ' + key + ': ' + spider.settings[key])
     }
   }
@@ -89,7 +92,6 @@ function printSpider(spider) {
 leio.pipeline = require('./lib/pipeline')
 leio.downloader = require('./lib/downloader')
 leio.middleware = require('./lib/middleware')
-leio.redisScheduler = require('./lib/redis-scheduler')
 leio.defer = Q.defer
 
-module.exports = leio
+leio.redisSpider = require('./redis-spider')

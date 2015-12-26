@@ -3,7 +3,6 @@
 var fs = require('fs')
   , pkg = require('./package.json')
   , version = 'leiobunum ' + pkg['version']
-  , leio = require(__dirname + '/index.js')
 
 exports.start = function (argv) {
   console.log('Start project...')
