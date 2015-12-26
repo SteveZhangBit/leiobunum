@@ -1,7 +1,7 @@
 'use strict'
 
 var fs = require('fs')
-  , pkg = JSON.parse(fs.readFileSync(__dirname + '/package.json'))
+  , pkg = require('./package.json')
   , version = 'leiobunum ' + pkg['version']
   , leio = require(__dirname + '/index.js')
 

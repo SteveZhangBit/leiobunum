@@ -7,6 +7,7 @@ var Spider = require('./lib/spider')
 
 leio.spider = function (options) {
   var spider = new Spider(options)
+    , closeReason = 'jobs completed'
 
   spider.run = function () {
     var logger = spider.logger
@@ -26,6 +27,10 @@ leio.spider = function (options) {
     // dump
     process.once('beforeExit', function () {
       spider.stats.dump()
+    })
+    process.on('SIGINT', function () {
+      closeReason = 'user interrupt'
+      scheduler.stop()
     })
 
     process.on('uncaughtException', function(err) {
@@ -51,7 +56,7 @@ leio.spider = function (options) {
         .then(_isSchedulerEmpty(itemScheduler))
         .then(function () {
           if (++heartbeat === 3) {
-            signals.spiderClosed('jobs completed', spider)
+            signals.spiderClosed(closeReason, spider)
             clearInterval(timer)
           }
         })
